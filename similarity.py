@@ -64,6 +64,6 @@ finally:
  g.close()
 
 # Similarity Factors
-	# - Avg Heart Rate 20%
-	# - Standard Deviation 40%
-	# - Rate of Inclination 40%
+	# - Avg Heart Rate 50%
+	# - Standard Deviation 20%
+	# - Rate of Inclination 30&
