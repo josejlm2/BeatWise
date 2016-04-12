@@ -1,7 +1,7 @@
 import sys, operator, glob, os, re, math, csv, datetime, random, math, time
 from collections import OrderedDict
 from datetime import datetime
-
+from math import floor
 
 class Cluster:
     def __init__(self, name, center, pointList):
@@ -24,6 +24,11 @@ def avg_centroid (pointList):
 		
 	total = len(pointList)
 	return [ x / total, y / total]
+	
+
+def floored_percentage(val, digits):
+    val *= 10 ** (digits + 2)
+    return '{1:.{0}f}%'.format(digits, floor(val) / 10 ** digits)
 
 
 	
@@ -81,7 +86,7 @@ def test(foldername, clusters, precision):
 	minTime = min(o_dict.keys(), key=int)
 	maxBeat = o_dict[max(o_dict, key=o_dict.get)]
 	minBeat = o_dict[min(o_dict, key=o_dict.get)]
-	
+	total   = len(o_dict)
 	
 	#initialize clusterList
 	k = clusters
@@ -138,7 +143,9 @@ def test(foldername, clusters, precision):
 		results =  sorted(b, key=lambda activity: activity[0])
 		for activity in results:
 			#print "Activity[%d]: From %s to %s " % (activity[2], time.strftime("%H:%M:%S", time.gmtime(activity[0])), time.strftime("%H:%M:%S", time.gmtime(activity[1])) )
-			print "[From %s to %s] Activity(%d)" % (time.strftime("%H:%M:%S", time.gmtime(activity[0])), time.strftime("%H:%M:%S", time.gmtime(activity[1])) , activity[2] )
+			print "[From %s to %s] Activity(%s)" % (time.strftime("%H:%M:%S", time.gmtime(activity[0])), time.strftime("%H:%M:%S", time.gmtime(activity[1])) ,floored_percentage( int(activity[2])/float(total),1) )
+			
+			
 			
 		print ""
 		print ""
