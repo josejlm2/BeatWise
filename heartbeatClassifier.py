@@ -40,7 +40,6 @@ def euclidean_distance (A, B):
 	x2 = list(B)[0]
 	y2 = list(B)[1]
 
-	#return math.sqrt( (A[0]-B[0])**2 + (A[1]-B[1])**2 )
 	return math.sqrt( (x1-x2)**2 + (y1-y2)**2 )
 	
 
@@ -122,16 +121,23 @@ def test(foldername, clusters, precision):
 
 			clusterList[closest].pointList.append(point)
 		
-		print "ITERATION %d " % numb
+		
+		b = []
+		
 		for a in range(0,clusters):
 			if not clusterList[a].pointList:
 				clusterList[a].center = random_centroid(minTime, maxTime, minBeat, maxBeat)
 				print "Bad centroid"
 			else:
-				print "Activity[%d]: %s to %s " % ( len(clusterList[a].pointList), min(clusterList[a].pointList)[0], max(clusterList[a].pointList)[0] ) 
+				#print "Activity[%d]: %s to %s " % ( len(clusterList[a].pointList), min(clusterList[a].pointList)[0], max(clusterList[a].pointList)[0] ) 
+				b.append((min(clusterList[a].pointList)[0], max(clusterList[a].pointList)[0] , len(clusterList[a].pointList))) 
 				clusterList[a].center = avg_centroid(clusterList[a].pointList)
 				clusterList[a].pointList = []
 		
+		print "ITERATION %d " % numb
+		results =  sorted(b, key=lambda activity: activity[0])
+		for activity in results:
+			print "Activity[%d]: From %d to %d " % (activity[2], activity[0], activity[1] )
 		print ""
 		print ""
 	
