@@ -4,11 +4,29 @@ from datetime import datetime
 
 
 class Cluster:
-    def __init__(self, center, pointList):
-        self.name = ""
+    def __init__(self, name, center, pointList):
+        self.name = name
         self.center = center
         self.pointList = pointList
 
+		
+def random_centroid(minTime, maxTime, minBeat, maxBeat):
+		randomTime = random.randrange(minTime, maxTime)
+		randomBeat = random.randrange(minBeat, maxBeat)
+		return [randomTime, randomBeat]
+		
+def avg_centroid (pointList):
+	x = 0
+	y = 0 
+	for point in pointList:
+		x += point[0]
+		y += point[1]
+		
+	total = len(pointList)
+	return [ x / total, y / total]
+
+
+	
 #read the file; return a string
 def read_file(file):
 	f = open(file, 'r')
@@ -32,7 +50,7 @@ def removekey(d, key):
     return r
 	
 #create dictionary with cvs data
-def test(foldername, clusters):
+def test(foldername, clusters, precision):
 	FMT = '%H:%M:%S'
 	os.chdir(foldername)	
 	
@@ -65,80 +83,57 @@ def test(foldername, clusters):
 	maxBeat = o_dict[max(o_dict, key=o_dict.get)]
 	minBeat = o_dict[min(o_dict, key=o_dict.get)]
 	
-	#print maxTime
-	#print minTime
-	#print maxBeat
-	#print minBeat
-	
 	
 	#initialize clusterList
 	k = clusters
-	i = 1
 	clusterList = [] 
 	
-	#make a copy
-	points = OrderedDict()
-	points = o_dict
 	
-	i = 1
 	#for cluster in clusterList:	
-	for num in range(1,k+1):
+	for num in range(0,k):
 		#pick a random center
 		randomTime = random.randrange(minTime, maxTime)
 		randomBeat = random.randrange(minBeat, maxBeat)
+		clusterList.append(Cluster(num,{randomTime, randomBeat},[]))
+		print "Cluster%d with center (%d, %d)" % (num, randomTime, randomBeat)		
 		
-		cluster = Cluster([],[])
-		cluster.name = i
-		cluster.center = {randomTime, randomBeat}
-		cluster.pointList = []
-		print "Cluster%d with center (%d, %d)" % (i, randomTime, randomBeat)
-		i += 1
-		clusterList.append(cluster)
-	
-	
-	
-	
-	
 	print ""
 	print "Forming Clusters..."
 	
 
 	print ""
 	print ""
-	print "Give it a second...."
 	
 	
-	while (len(points) > 0):
-		for cluster in clusterList:	
+	
+	
+	for numb in range(1,precision + 1):
+		
+		for point in o_dict.items():
+			
+			closest = 0
 			distance = 100000
-			center = cluster.center
-			closest = [0,0]
-			for point in points.items():
-				if distance > euclidean_distance(center, point):
-					distance = euclidean_distance(center, point)
-					closest = point
 			
-			cluster.pointList.append(closest)	
-			
-			if not closest:
-				break
-			else:
-				del points[closest[0]]
-			
-			
-			#print "Cluster%s" % cluster.name
-			#print "Closest Point:"
-			#print closest
-			#print "size %d" % len(points)
-			
+			for index, cluster in enumerate(clusterList):
+				
+				if distance > euclidean_distance(cluster.center, point):
+					distance = euclidean_distance(cluster.center, point)
+					closest = index
 
-	
-	
-	print "Clustering Complete"
-	
-	for cluster in clusterList:
-		#print len(cluster.pointList)
-		print "Activity: %s to %s " % (min(cluster.pointList), max(cluster.pointList) )
+			clusterList[closest].pointList.append(point)
+		
+		print "ITERATION %d " % numb
+		for a in range(0,clusters):
+			if not clusterList[a].pointList:
+				clusterList[a].center = random_centroid(minTime, maxTime, minBeat, maxBeat)
+				print "Bad centroid"
+			else:
+				print "Activity[%d]: %s to %s " % ( len(clusterList[a].pointList), min(clusterList[a].pointList)[0], max(clusterList[a].pointList)[0] ) 
+				clusterList[a].center = avg_centroid(clusterList[a].pointList)
+				clusterList[a].pointList = []
+		
+		print ""
+		print ""
 	
 	return 0
 	
@@ -146,14 +141,15 @@ def test(foldername, clusters):
 # run code by 
 # python heartbeatClassifier.py data
 def main():
-	if len(sys.argv) != 3:
-		print 'usage: ./heartbeatClassifier.py foldername k'
+	if len(sys.argv) != 4:
+		print 'usage: ./heartbeatClassifier.py foldername k precision'
 		sys.exit(1)
   
 	
 	foldername = sys.argv[1]
 	clusters = int(sys.argv[2])
-	test(foldername, clusters)
+	precision = int(sys.argv[3])
+	test(foldername, clusters, precision)
 	
 
 if __name__ == '__main__':
