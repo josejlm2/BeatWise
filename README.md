@@ -9,10 +9,14 @@ For this part of the algorithm, we need to split the data into activities, or cl
 To run the code, simply type the following line of code into python command prompt where the code is located:
    
 ```
-python heartbeatClassifier.py data k
+DEFAULT: 
+python heartbeatClassifier.py foldername k precision
+
+EXAMPLE:
+python heartbeatClassifier.py data 5 5
 ```
 
-k is the number of clusters and data is the folder where the test data is located. 
+ > Foldername is the folder where the test data is located which in this repository is called data, k is the number of clusters, and precision is the number of iterations you want the algorithm to do. 
 
 This will basically read the files from the data folder, represent the information as points, put them in a dictionary, then cluster similar activities using k-means, and finally output the results. 
 
