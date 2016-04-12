@@ -1,4 +1,4 @@
-import sys, operator, glob, os, re, math, csv, datetime, random, math
+import sys, operator, glob, os, re, math, csv, datetime, random, math, time
 from collections import OrderedDict
 from datetime import datetime
 
@@ -137,7 +137,9 @@ def test(foldername, clusters, precision):
 		print "ITERATION %d " % numb
 		results =  sorted(b, key=lambda activity: activity[0])
 		for activity in results:
-			print "Activity[%d]: From %d to %d " % (activity[2], activity[0], activity[1] )
+			#print "Activity[%d]: From %s to %s " % (activity[2], time.strftime("%H:%M:%S", time.gmtime(activity[0])), time.strftime("%H:%M:%S", time.gmtime(activity[1])) )
+			print "[From %s to %s] Activity(%d)" % (time.strftime("%H:%M:%S", time.gmtime(activity[0])), time.strftime("%H:%M:%S", time.gmtime(activity[1])) , activity[2] )
+			
 		print ""
 		print ""
 	
@@ -145,7 +147,7 @@ def test(foldername, clusters, precision):
 	
 # main function 
 # run code by 
-# python heartbeatClassifier.py data
+# python heartbeatClassifier.py data 5 10
 def main():
 	if len(sys.argv) != 4:
 		print 'usage: ./heartbeatClassifier.py foldername k precision'
