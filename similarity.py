@@ -1,4 +1,4 @@
-import csv, sys, datetime, time, math, json
+import sys, datetime, time, math, json
 
 f = open(sys.argv[1], 'rt')
 g = open(sys.argv[2], 'rt')
@@ -63,8 +63,9 @@ def main():
  finally:
   f.close()
   g.close()
-  
- return json.dumps([{"id":1,"Mean":ascore,"STD":bscore,"Rate":cscore,"Total":(.5 * ascore + .2 * bscore + .3 * cscore)}])
+ 
+ t = (.5 * ascore + .2 * bscore + .3 * cscore);
+ print json.dumps([{"id":1,"Mean":ascore,"STD":bscore,"Rate":cscore,"Total":t}])
 # Similarity Factors
 	# - Avg Heart Rate 50%
 	# - Standard Deviation 20%
