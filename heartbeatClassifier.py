@@ -1,4 +1,4 @@
-import sys, operator, glob, os, re, math, csv, datetime, random, math, time
+import sys, operator, glob, os, re, math, csv, datetime, random, math, time, json
 from collections import OrderedDict
 from datetime import datetime
 from math import floor
@@ -11,9 +11,10 @@ class Cluster:
 
 		
 def random_centroid(minTime, maxTime, minBeat, maxBeat):
-		randomTime = random.randrange(minTime, maxTime)
-		randomBeat = random.randrange(minBeat, maxBeat)
+		randomTime = random.randrange(int(minTime), int(maxTime))
+		randomBeat = random.randrange(int(minBeat), int(maxBeat) + 1) if int(maxBeat) == int(minBeat) else random.randrange(int(minBeat), int(maxBeat))
 		return [randomTime, randomBeat]
+		
 		
 def avg_centroid (pointList):
 	x = 0
@@ -38,6 +39,15 @@ def read_file(file):
 	a = f.read()
 	return a
 
+
+#read example json file from directory
+def read_json(file):
+	with open(file) as json_data:
+		d = json.load(json_data)
+		json_data.close()
+	
+	return d['activities-heart-intraday']['dataset']
+
 	
 def euclidean_distance (A, B):
 	x1 = list(A)[0]
@@ -48,39 +58,54 @@ def euclidean_distance (A, B):
 	return math.sqrt( (x1-x2)**2 + (y1-y2)**2 )
 	
 
-def removekey(d, key):
-    r = dict(d)
-    del r[key]
-    return r
-	
 #create dictionary with cvs data
 def test(foldername, clusters, precision):
-	FMT = '%H:%M:%S'
+	
+	#change directory where data is located
 	os.chdir(foldername)	
 	
-	a = []
-	for file in glob.glob("*.txt"):
-		list = read_file(file)
-		a = re.split('\s', list)
-	
+	#initialize variables
+	FMT = '%H:%M:%S'
 	o_dict = OrderedDict()
-	dict = {}
+	o_dict2 = OrderedDict()
 	beatList = []
 	timeList = []
-	for line in a:
-		b = re.split('[,]', line)
-		#print b
+	
+	#read json data
+	data = read_json('March28.json')
+
+	#populate heartbeat, time, and ordered dictionary
+	for heartbeat in data:
+		tdelta  = datetime.strptime(heartbeat.get('time'), FMT) - datetime.strptime("00:00:00", FMT)
+		timeList.append(tdelta.seconds)
 		
-		if len(b) == 2:
-			
-			timeList.append(b[0])
-			beatList.append(int(b[1]))
-			dict[b[0]] = b[1]			
-			tdelta  = datetime.strptime(b[0], FMT) - datetime.strptime("00:00:00", FMT)
-			#o_dict[b[0]] = int(b[1])
-			o_dict[tdelta.seconds] = int(b[1])
+		beatList.append(float(heartbeat.get('value')))
+		
+		o_dict[tdelta.seconds] = int(heartbeat.get('value'))
+		o_dict2[heartbeat.get('time')] = int(heartbeat.get('value'))
+		
+
+
+		
+	#populate dictionary based on rate of change
+	i = 0
+	for index,val in o_dict.items():
+		
+		val = beatList[i] - beatList[i-1] / timeList[i] - timeList[i-1]
+		beats = beatList[i] - beatList[i-1]
+		times = float(timeList[i]) - float(timeList[i-1])
+		o_dict[index] =  beats / float(times)		
+		i += 1
+		
+	o_dict[timeList[0]] = 0
+		
+		
+	#debuggin
+	#for point,val in o_dict.items():
+	#	print val
 	
 
+	
 	#get the max and mins of the data 
 	maxTime = max(o_dict.keys(), key=int)
 	minTime = min(o_dict.keys(), key=int)
@@ -88,23 +113,25 @@ def test(foldername, clusters, precision):
 	minBeat = o_dict[min(o_dict, key=o_dict.get)]
 	total   = len(o_dict)
 	
+
+	
 	#initialize clusterList
 	k = clusters
 	clusterList = [] 
 	
 	
+
+	
 	#for cluster in clusterList:	
 	for num in range(0,k):
 		#pick a random center
-		randomTime = random.randrange(minTime, maxTime)
-		randomBeat = random.randrange(minBeat, maxBeat)
+		randomTime = random.randrange(int(minTime), int(maxTime))
+		randomBeat = random.randrange(int(minBeat), int(maxBeat) + 1) if int(maxBeat) == int(minBeat) else random.randrange(int(minBeat), int(maxBeat)) 
 		clusterList.append(Cluster(num,{randomTime, randomBeat},[]))
 		print "Cluster%d with center (%d, %d)" % (num, randomTime, randomBeat)		
 		
 	print ""
 	print "Forming Clusters..."
-	
-
 	print ""
 	print ""
 	
@@ -135,20 +162,45 @@ def test(foldername, clusters, precision):
 				print "Bad centroid"
 			else:
 				#print "Activity[%d]: %s to %s " % ( len(clusterList[a].pointList), min(clusterList[a].pointList)[0], max(clusterList[a].pointList)[0] ) 
-				b.append((min(clusterList[a].pointList)[0], max(clusterList[a].pointList)[0] , len(clusterList[a].pointList))) 
+				b.append((int(min(clusterList[a].pointList)[0]), int(max(clusterList[a].pointList)[0]) , len(clusterList[a].pointList)) )
 				clusterList[a].center = avg_centroid(clusterList[a].pointList)
 				clusterList[a].pointList = []
 		
 		print "ITERATION %d " % numb
 		results =  sorted(b, key=lambda activity: activity[0])
+		print results
+		
+		
+		
+		#export results to json file
+		
+		result = []
 		for activity in results:
-			#print "Activity[%d]: From %s to %s " % (activity[2], time.strftime("%H:%M:%S", time.gmtime(activity[0])), time.strftime("%H:%M:%S", time.gmtime(activity[1])) )
-			print "[From %s to %s] Activity(%s)" % (time.strftime("%H:%M:%S", time.gmtime(activity[0])), time.strftime("%H:%M:%S", time.gmtime(activity[1])) ,floored_percentage( int(activity[2])/float(total),1) )
+
+			start = time.strftime("%H:%M:%S", time.gmtime(int(activity[0])))
+			end = time.strftime("%H:%M:%S", time.gmtime(int(activity[1])))
 			
+			test = False 
+			dict = {}
+			for point,val in o_dict2.items():
+				
+				if start == point:
+					test = True
+					
+				if test:
+					dict[point] = val
+					
+				if end == point:
+					test = False
 			
+			result.append(dict)
 			
+		with open('results.json', 'w') as outfile:
+			json.dump(result, outfile)
+					
 		print ""
 		print ""
+		print "see results.json for json clusters"
 	
 	return 0
 	
@@ -160,12 +212,10 @@ def main():
 		print 'usage: ./heartbeatClassifier.py foldername k precision'
 		sys.exit(1)
   
-	
 	foldername = sys.argv[1]
 	clusters = int(sys.argv[2])
 	precision = int(sys.argv[3])
 	test(foldername, clusters, precision)
-	
 
 if __name__ == '__main__':
 	main()
